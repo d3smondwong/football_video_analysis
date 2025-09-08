@@ -1,7 +1,10 @@
-# videos in input_videos
+# videos in input_videos and output_videos
 input_videos/*.mp4
 input_videos/*.avi
 input_videos/*.mov
+output_videos/*.mp4
+output_videos/*.avi
+output_videos/*.mov
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
