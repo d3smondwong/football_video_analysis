@@ -1,3 +1,6 @@
+# hydra outputs
+outputs/
+
 # videos in input_videos and output_videos
 input_videos/*.mp4
 input_videos/*.avi
