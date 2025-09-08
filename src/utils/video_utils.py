@@ -1,6 +1,8 @@
 import cv2
+from typing import Union
+from pathlib import Path
 
-def read_video(video_path: str) -> list:
+def read_video(input_video_path: Union[str, Path]) -> list:
     """
     Reads a video file and returns its frames as a list of images.
 
@@ -11,7 +13,7 @@ def read_video(video_path: str) -> list:
         list: A list of frames (numpy.ndarray) extracted from the video.
     """
     # Open the video file
-    cap = cv2.VideoCapture(video_path)
+    cap = cv2.VideoCapture(str(input_video_path))
 
     # Initialize a list to store the frames
     frames = []
