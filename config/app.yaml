@@ -1,0 +1,8 @@
+# Video to analyze
+video:
+  video_name: "man_united_asean_allstars.mp4"
+
+# Directories
+directories:
+  input_video_directory: "input_videos/"
+  output_video_directory: "output_videos/"
