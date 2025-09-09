@@ -1,3 +1,10 @@
+# Model inference output
+model_test/runs/
+
+# Model training output
+training/runs/
+football-players-detection-19/
+
 # hydra outputs
 outputs/
 
