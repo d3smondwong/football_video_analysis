@@ -2,7 +2,22 @@
 video:
   video_name: "man_united_asean_allstars.mp4"
 
+# Roboflow Models
+roboflow_model:
+  model_id: "football-players-detection-3zvbc/19"
+
+# Fine Tuned Models
+fine_tuned_model:
+  yolo12m_best_model: "yolo12m_best.pt"
+
 # Directories
 directories:
   input_video_directory: "input_videos/"
   output_video_directory: "output_videos/"
+  raw_models: "artifacts/raw_models/"
+  fine_tuned_models: "artifacts/fine_tuned_models/"
+
+# Hydra configuration for logging. Customised the folder
+hydra:
+  run:
+    dir: hydra_logs/${now:%Y-%m-%d}/${now:%H-%M-%S}
