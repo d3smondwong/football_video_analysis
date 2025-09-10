@@ -1,20 +1,20 @@
-# Model inference output
+# Model inference test
 model_test/runs/
 
 # Model training output
 training/runs/
 football-players-detection-19/
 
+# Models
+*.pt
+
 # hydra outputs
-outputs/
+hydra_logs/
 
 # videos in input_videos and output_videos
-input_videos/*.mp4
-input_videos/*.avi
-input_videos/*.mov
-output_videos/*.mp4
-output_videos/*.avi
-output_videos/*.mov
+*.mp4
+*.avi
+*.mov
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
