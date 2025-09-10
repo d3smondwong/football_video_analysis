@@ -1,11 +1,21 @@
-from src.utils.video_utils import read_video, save_video
-from pathlib import Path
+import os
 import hydra
+import logging
+
+from pathlib import Path
+from dotenv import load_dotenv
 from omegaconf import DictConfig
 from hydra.utils import get_original_cwd
+from inference_sdk import InferenceHTTPClient
+
+from src.utils.video_utils import read_video, save_video
+from src.trackers.tracker import Tracker
 
 @hydra.main(config_path="../config", config_name="app.yaml", version_base="1.2")
 def main(cfg: DictConfig):
+
+    # Set up logging
+    logger = logging.getLogger(os.path.basename(__file__))
 
     ###
     # Read the frames from the input video file
@@ -24,28 +34,46 @@ def main(cfg: DictConfig):
         raise ValueError(f"Unsupported video file format: {input_video_path.suffix}. Supported formats are .mp4, .avi, .mov.")
 
     # Read video frames
-    print(f"Reading video frames from: {input_video_path}")
+    logger.info(f"Reading video frames from: {input_video_path}")
     video_frames = read_video(str(input_video_path))
 
     # Process frames (this is just a placeholder for actual processing logic)
-    processed_frames = [frame for frame in video_frames]  # No processing in this example
+    # processed_frames = [frame for frame in video_frames]  # No processing in this example
 
-    # Ensure output directory exists
-    output_video_path = Path("output_videos/output_video.avi")
+    ###
+    # Trackers
+    ###
+    # Model Path
+    model_directory = cfg.directories.fine_tuned_models
+    model_path = Path(model_directory) / cfg.fine_tuned_model.yolo12m_best_model
 
-    # Check if the parent directory of the output video path exists, if not, create it
-    if not output_video_path.parent.exists():
-        output_video_path.parent.mkdir(parents=True, exist_ok=True)
+    # Initialize the Tracker
+    tracker = Tracker(str(model_path))
+
+    tracks = tracker.get_object_tracks(video_frames)
+
+    ###
+    # Draw output on the video frames
+    ###
+    # output_video_frames = tracker.draw_annotations(video_frames, tracks,team_ball_control)
 
     ###
     # Save video frames to the output video file
     ###
-    output_dir = cfg.directories.output_video_directory
-    output_video_path = Path(f"{output_dir}/{input_video_path.stem}_analysis.avi")
-    print(f"Saving video frames to: {output_video_path}")
+
+    # Output video path
+    output_dir = Path(cfg.directories.output_video_directory)
+    output_name = f"{input_video_path.stem}_analysis.avi"
+    output_video_path = Path(get_original_cwd()) / output_dir / output_name
+
+    # Check if the parent directory of the output video path exists, if not, create it
+    if not output_dir.exists():
+        output_dir.mkdir(parents=True, exist_ok=True)
+
+    logger.info(f"Saving video frames to: {output_video_path}")
 
     # Save processed video frames to a new video file
-    save_video(processed_frames, str(output_video_path))
+    save_video(video_frames, str(output_video_path))
 
 if __name__ == "__main__":
     # python -m src.app

@@ -21,6 +21,8 @@ def read_video(input_video_path: Union[str, Path]) -> list:
     # Read frames from the video. ret is a boolean indicating if the frame was read successfully. frame is the actual frame.
     while True:
         ret, frame = cap.read()
+
+        # Break the loop if video has ended
         if not ret:
             break
         frames.append(frame)
