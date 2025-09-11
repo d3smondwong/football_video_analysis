@@ -8,6 +8,9 @@ football-players-detection-19/
 # Models
 *.pt
 
+# Stubs
+*.pkl
+
 # hydra outputs
 hydra_logs/
 
