@@ -16,6 +16,7 @@ directories:
   output_video_directory: "output_videos/"
   raw_models: "artifacts/raw_models/"
   fine_tuned_models: "artifacts/fine_tuned_models/"
+  stubs: "artifacts/stubs/"
 
 # Hydra configuration for logging. Customised the folder
 hydra:
