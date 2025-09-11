@@ -50,7 +50,20 @@ def main(cfg: DictConfig):
     # Initialize the Tracker
     tracker = Tracker(str(model_path))
 
-    tracks = tracker.get_object_tracks(video_frames)
+    # Create stubs directory if it does not exist
+    stub_dir = cfg.directories.stubs
+    stub_name = f"{input_video_path.stem}_stub.pkl"
+    stub_dir_path = Path(get_original_cwd()) / stub_dir
+    stub_file_path = stub_dir_path / stub_name
+
+    if not stub_dir_path.exists():
+        stub_dir_path.mkdir(parents=True, exist_ok=True)
+
+    # Get object tracking from the video frames
+    tracks = tracker.get_object_tracking(video_frames,
+                                       read_from_stub=True,
+                                       stub_path=stub_file_path
+                                       )
 
     ###
     # Draw output on the video frames
