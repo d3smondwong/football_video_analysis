@@ -119,8 +119,8 @@ class Tracker:
 
         axes_length = (int(width), int(0.35*width))
         angle = 0
-        # Ellipse is drawn from start_angle to end_angle. Draw 45 - 235 degrees for players to stand out
-        start_angle = 45
+        # Ellipse is drawn from start_angle to end_angle. Draw 0 - 235 degrees for players to stand out
+        start_angle = 0
         end_angle = 235
         thickness = 2
         line_type = cv2.LINE_4
