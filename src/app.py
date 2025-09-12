@@ -60,7 +60,7 @@ def main(cfg: DictConfig):
         stub_dir_path.mkdir(parents=True, exist_ok=True)
 
     # Get object tracking from the video frames
-    tracks = tracker.get_object_tracking(video_frames,
+    tracking_list = tracker.get_object_tracking(video_frames,
                                        read_from_stub=True,
                                        stub_path=stub_file_path
                                        )
@@ -68,7 +68,10 @@ def main(cfg: DictConfig):
     ###
     # Draw output on the video frames
     ###
-    # output_video_frames = tracker.draw_annotations(video_frames, tracks,team_ball_control)
+    output_video_frames = tracker.draw_annotations(video_frames, tracking_list)
+    if output_video_frames is None:
+        logger.error("No output video frames were generated. Please check tracker.draw_annotations method.")
+        return
 
     ###
     # Save video frames to the output video file
@@ -86,7 +89,7 @@ def main(cfg: DictConfig):
     logger.info(f"Saving video frames to: {output_video_path}")
 
     # Save processed video frames to a new video file
-    save_video(video_frames, str(output_video_path))
+    save_video(output_video_frames, str(output_video_path))
 
 if __name__ == "__main__":
     # python -m src.app
