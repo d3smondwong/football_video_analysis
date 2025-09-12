@@ -25,7 +25,7 @@ class Tracker:
 
         for i in range(0, len(frames), batch_size):
             batch = frames[i:i + batch_size]
-            detections_batch = self.model.predict(batch, conf=0.1, verbose=False)
+            detections_batch = self.model.predict(batch, conf=0.6, verbose=False)
 
             detections += detections_batch
 
@@ -157,6 +157,11 @@ class Tracker:
             for track_id, player in player_dict.items():
                 color = player.get("team_color",(0,0,255))
                 frame = self._draw_ellipse(frame, player["bbox"],color, track_id)
+
+            # Draw referees
+            for track_id, referee in referee_dict.items():
+                color = referee.get("team_color",(0,255,255))
+                frame = self._draw_ellipse(frame, referee["bbox"],color, track_id)
 
             output_video_frames.append(frame)
 
