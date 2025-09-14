@@ -12,6 +12,7 @@ fine_tuned_model:
 
 # Directories
 directories:
+  development_and_analysis: "development_and_analysis/"
   input_video_directory: "input_videos/"
   output_video_directory: "output_videos/"
   raw_models: "artifacts/raw_models/"
