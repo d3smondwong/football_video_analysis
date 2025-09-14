@@ -1,6 +1,7 @@
 import os
 import hydra
 import logging
+import cv2
 
 from pathlib import Path
 from dotenv import load_dotenv
@@ -36,9 +37,6 @@ def main(cfg: DictConfig):
     # Read video frames
     logger.info(f"Reading video frames from: {input_video_path}")
     video_frames = read_video(str(input_video_path))
-
-    # Process frames (this is just a placeholder for actual processing logic)
-    # processed_frames = [frame for frame in video_frames]  # No processing in this example
 
     ###
     # Trackers
