@@ -11,6 +11,7 @@ from inference_sdk import InferenceHTTPClient
 
 from src.utils.video_utils import read_video, save_video
 from src.trackers.tracker import Tracker
+from src.team_identifier.team_identifier import TeamIdentifier
 
 @hydra.main(config_path="../config", config_name="app.yaml", version_base="1.2")
 def main(cfg: DictConfig):
@@ -62,6 +63,37 @@ def main(cfg: DictConfig):
                                        read_from_stub=True,
                                        stub_path=stub_file_path
                                        )
+    ###
+    # Identify team for each player using jersey color
+    ###
+    team_identifier = TeamIdentifier()
+    if tracking_list is not None and tracking_list.get("players") is not None and len(tracking_list["players"]) > 0:
+
+        team_identifier.identify_team_colors(video_frames[0], tracking_list["players"][0])
+
+        for frame_num, player_tracking in enumerate(tracking_list["players"]):
+
+            for player_id, player_info in player_tracking.items():
+                logger.info(f"Player Info: {player_info}, Team Color: {team_identifier.team_colors}")
+
+                # logger.info(f"Frame {frame_num}, Player ID: {player_id}, BBox: {player_info['bbox']}, Player_tracking: {player_tracking.items()}")
+                """
+                player_tracking.items() consist of
+                a key: player_id (np.int64)
+                a value: player_info dict with the following: 'bbox':[x1, y1, x2, y2] , 'team': np.int32(2) or np.int32(1), 'team_color': array([ 57.094, 57.212, 41.525])
+                """
+
+                team_colors = team_identifier.get_player_team(video_frames[frame_num],
+                                                                player_info['bbox'],
+                                                                player_id)
+
+                tracking_list['players'][frame_num][player_id]['team'] = team_colors
+                tracking_list['players'][frame_num][player_id]['team_color'] = team_identifier.team_colors[team_colors]
+    else:
+        logger.error("No player tracking data found in tracking_list['players'].")
+        return
+
+
 
     ###
     # Draw output on the video frames

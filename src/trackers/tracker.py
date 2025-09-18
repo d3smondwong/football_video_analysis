@@ -236,13 +236,11 @@ class Tracker:
 
             # Draw ellipse to annotate referees
             for track_id, referee in referee_dict.items():
-                color = referee.get("team_color",(0,255,255))
-                frame = self._draw_ellipse(frame, referee["bbox"],color, track_id)
+                frame = self._draw_ellipse(frame, referee["bbox"],(0,255,255), track_id)
 
             # Draw triangle to annotate ball
             for track_id, ball in ball_dict.items():
-                color = ball.get("team_color",(0,255,0))
-                frame = self._draw_triangle(frame, ball["bbox"],color)
+                frame = self._draw_triangle(frame, ball["bbox"],(0,255,0))
 
             output_video_frames.append(frame)
 
