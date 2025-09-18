@@ -63,6 +63,17 @@ def main(cfg: DictConfig):
                                        read_from_stub=True,
                                        stub_path=stub_file_path
                                        )
+
+    ###
+    # Interpolate the ball positions
+    ###
+    # Commenting out the ball interpolation for now as the ball is not tracked very well. Probably due to training data size. Will use the highest confidence detected ball in each frame instead
+    # if tracking_list is not None and tracking_list.get("ball") is not None:
+    #     tracking_list["ball"] = tracker.interpolate_ball_positions(tracking_list["ball"])
+    # else:
+    #     logger.error("No ball tracking data found in tracking_list['ball'].")
+    #     return
+
     ###
     # Identify team for each player using jersey color
     ###

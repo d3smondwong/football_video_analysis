@@ -4,6 +4,7 @@ import numpy as np
 import pickle
 import os
 import cv2
+import pandas as pd
 
 from ultralytics import YOLO
 from src.utils.bbox_utils import get_center_of_bbox, get_bbox_width, measure_distance, measure_xy_distance, get_foot_position
@@ -113,13 +114,21 @@ class Tracker:
                     # if class_id == class_names_inv['ball']:
                     #     tracking_list["ball"][frame_num][track_id] = {"bbox":bbox}
 
-                # As there is only one ball per frame. If multiple balls are detected, take the first one.
-                for frame_detection in detections_supervision:
-                    bbox = frame_detection[0].tolist()
-                    class_id = frame_detection[3]
+                # As there is only one ball per frame. If multiple balls are detected, take the one with the highest confidence.
+                # Find all ball detections in the current frame
+                ball_indices = [i for i, cid in enumerate(detections_supervision.class_id) if cid == class_names_inv['ball']] if detections_supervision.class_id is not None else []
 
-                    if class_id == class_names_inv['ball']:
-                        tracking_list["ball"][frame_num][1] = {"bbox":bbox}
+                if ball_indices and detections_supervision.confidence is not None:
+                    # Get the index of the ball detection with the highest confidence
+                    ball_confidences = [detections_supervision.confidence[i] for i in ball_indices]
+                    max_conf_idx = ball_indices[np.argmax(ball_confidences)]
+                    bbox = detections_supervision.xyxy[max_conf_idx].tolist()
+                    tracking_list["ball"][frame_num][1] = {"bbox": bbox}
+
+                elif ball_indices:
+                    # If confidence is None, just take the first ball index
+                    bbox = detections_supervision.xyxy[ball_indices[0]].tolist()
+                    tracking_list["ball"][frame_num][1] = {"bbox": bbox}
 
             # After processing all frames, save the tracking_list to stub file
             if stub_path is not None:
@@ -204,6 +213,23 @@ class Tracker:
         cv2.drawContours(frame, [triangle_points], 0, (0,0,0), 2)  # 2 is the thickness of the outline
 
         return frame
+
+    def interpolate_ball_positions(self, ball_positions):
+
+        # Not in use currently. Will use the detected ball position with highest confidence in each frame instead.
+
+        # Extract the bounding box coordinates for the ball
+        ball_positions = [x.get(1,{}).get('bbox',[]) for x in ball_positions]
+
+        df_ball_positions = pd.DataFrame(ball_positions, columns=['x1', 'y1', 'x2', 'y2'])
+
+        # Interpolate missing ball positions
+        df_ball_positions = df_ball_positions.interpolate(method='linear', limit_direction='both')
+        df_ball_positions = df_ball_positions.bfill()
+
+        ball_positions = [{1: {"bbox":x}} for x in df_ball_positions.to_numpy().tolist()]
+
+        return ball_positions
 
     def draw_annotations(self, video_frames, tracking_list):
         logger.info(f'Start draw_annotations function')
