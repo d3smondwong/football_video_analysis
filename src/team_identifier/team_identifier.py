@@ -2,11 +2,30 @@ from sklearn.cluster import KMeans
 import numpy as np
 
 class TeamIdentifier:
+    """Class to identify teams based on jersey colors using KMeans clustering."""
+
     def __init__(self):
+        """
+        Initializes the TeamIdentifier class.
+
+        Attributes:
+            team_colors (dict): A dictionary to store team colors.
+            player_team_dict (dict): A dictionary mapping players to their respective teams.
+        """
         self.team_colors = {}
         self.player_team_dict = {}
 
-    def get_player_color(self, frame, bbox):
+    def get_player_color(self, frame: np.ndarray, bbox: tuple) -> np.ndarray:
+        """
+        Extracts the dominant jersey color of a player from the frame using KMeans clustering.
+
+        Args:
+            frame (np.ndarray): The image frame containing the player.
+            bbox (list): Bounding box coordinates [x1, y1, x2, y2] for cropping the player.
+
+        Returns:
+            np.ndarray: The RGB value of the player's jersey color.
+        """
 
         # Crop the player from the frame using the bounding box coordinates
         image = frame[int(bbox[1]):int(bbox[3]), int(bbox[0]):int(bbox[2])]
@@ -43,7 +62,23 @@ class TeamIdentifier:
 
         return player_color
 
-    def identify_team_colors(self, frame, player_detections):
+    def identify_team_colors(
+        self,
+        frame: np.ndarray,
+        player_detections: dict
+    ) -> list:
+        """
+        Identifies the dominant colors of player jerseys in a given video frame and clusters them to determine team colors.
+        Args:
+            frame (np.ndarray): The current video frame containing players.
+            player_detections (dict): A dictionary of player detections, where each value contains a 'bbox' key representing the bounding box coordinates of a player.
+        Returns:
+            list: A list of dominant colors (as arrays or tuples) for each detected player in the frame.
+        Side Effects:
+            - Fits a KMeans clustering model to the detected player colors.
+            - Updates `self.kmeans` with the fitted KMeans model.
+            - Updates `self.team_colors` with the identified team colors from the cluster centers.
+        """
         player_colors = []
 
         for _, player_detection in player_detections.items():
@@ -67,7 +102,19 @@ class TeamIdentifier:
 
         return player_colors
 
-    def get_player_team(self, frame, player_bbox, player_id):
+    def get_player_team(self, frame: np.ndarray, player_bbox: tuple, player_id: int) -> int:
+        """
+        Determines the team label for a given player in a video frame.
+        If the player's team has already been identified, returns the stored team label.
+        Otherwise, extracts the dominant jersey color from the player's bounding box,
+        predicts the team using a k-means clustering model, stores the result, and returns the team label.
+        Args:
+            frame (np.ndarray): The current video frame containing the player.
+            player_bbox (tuple): The bounding box coordinates of the player (x, y, w, h).
+            player_id (int): The unique identifier for the player.
+        Returns:
+            int: The team label assigned to the player (1 or 2).
+        """
 
         if player_id in self.player_team_dict:
             return self.player_team_dict[player_id]
