@@ -74,9 +74,8 @@ def main(cfg: DictConfig):
         for frame_num, player_tracking in enumerate(tracking_list["players"]):
 
             for player_id, player_info in player_tracking.items():
-                logger.info(f"Player Info: {player_info}, Team Color: {team_identifier.team_colors}")
+                # logger.info(f"player_id: {player_id}, Player Info: {player_info}, Team Color: {team_identifier.team_colors}")
 
-                # logger.info(f"Frame {frame_num}, Player ID: {player_id}, BBox: {player_info['bbox']}, Player_tracking: {player_tracking.items()}")
                 """
                 player_tracking.items() consist of
                 a key: player_id (np.int64)
