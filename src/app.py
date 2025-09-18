@@ -69,10 +69,13 @@ def main(cfg: DictConfig):
     team_identifier = TeamIdentifier()
     if tracking_list is not None and tracking_list.get("players") is not None and len(tracking_list["players"]) > 0:
 
+        # Initialize Kmeans and team colors using the detected players in the first frame
         team_identifier.identify_team_colors(video_frames[0], tracking_list["players"][0])
 
+        # Iterate through all frames and players to assign team colors
         for frame_num, player_tracking in enumerate(tracking_list["players"]):
 
+            # Update team colors for each player in the current frame
             for player_id, player_info in player_tracking.items():
                 # logger.info(f"player_id: {player_id}, Player Info: {player_info}, Team Color: {team_identifier.team_colors}")
 
@@ -81,11 +84,12 @@ def main(cfg: DictConfig):
                 a key: player_id (np.int64)
                 a value: player_info dict with the following: 'bbox':[x1, y1, x2, y2] , 'team': np.int32(2) or np.int32(1), 'team_color': array([ 57.094, 57.212, 41.525])
                 """
-
+                # Get the team color for the player
                 team_colors = team_identifier.get_player_team(video_frames[frame_num],
                                                                 player_info['bbox'],
                                                                 player_id)
 
+                # Update the tracking list with team and team_color
                 tracking_list['players'][frame_num][player_id]['team'] = team_colors
                 tracking_list['players'][frame_num][player_id]['team_color'] = team_identifier.team_colors[team_colors]
     else:
