@@ -1,6 +1,8 @@
 # Video to analyze
 video:
+  # video_name: "kaggle_football.mp4"
   video_name: "man_united_asean_allstars.mp4"
+
 
 # Roboflow Models
 roboflow_model:
