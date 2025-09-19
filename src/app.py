@@ -12,6 +12,7 @@ from inference_sdk import InferenceHTTPClient
 from src.utils.video_utils import read_video, save_video
 from src.trackers.tracker import Tracker
 from src.team_identifier.team_identifier import TeamIdentifier
+from src.player_with_ball.player_with_ball import PlayerBallAssigner
 
 @hydra.main(config_path="../config", config_name="app.yaml", version_base="1.2")
 def main(cfg: DictConfig):
@@ -73,6 +74,32 @@ def main(cfg: DictConfig):
     # else:
     #     logger.error("No ball tracking data found in tracking_list['ball'].")
     #     return
+
+    ###
+    # Assign ball to the closest player
+    ###
+    player_with_ball = PlayerBallAssigner()
+
+    for frame_num, player_info in enumerate(tracking_list["players"]):
+
+        # logger.info(f"Frame {frame_num}: Player_info: {player_info} ")
+        # logger.info(f"{list(tracking_list.keys())}")
+        # logger.info(f"{list(tracking_list['ball'])}")
+        #logger.info(f"{tracking_list['ball']}")
+
+        ball_info = tracking_list["ball"][frame_num]
+        if 1 in ball_info:
+            ball_bbox = ball_info[1]['bbox']
+        else:
+            ball_bbox = None
+
+        assigned_player_id = player_with_ball.assign_ball_to_player(player_info, ball_bbox)
+
+        if assigned_player_id is not None:
+
+            # Store the player ID who has the ball in the ball tracking list
+            tracking_list['players'][frame_num][assigned_player_id]['has_ball'] = True
+
 
     ###
     # Identify team for each player using jersey color

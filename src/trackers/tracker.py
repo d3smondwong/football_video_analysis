@@ -260,6 +260,10 @@ class Tracker:
                 color = player.get("team_color",(0,0,255))
                 frame = self._draw_ellipse(frame, player["bbox"],color, track_id)
 
+                # Draw triangle to annotate player with ball. Will be False unless has_ball is set to True
+                if player.get("has_ball", False):
+                    frame = self._draw_triangle(frame, player["bbox"], (0, 0, 255))
+
             # Draw ellipse to annotate referees
             for track_id, referee in referee_dict.items():
                 frame = self._draw_ellipse(frame, referee["bbox"],(0,255,255), track_id)
