@@ -1,10 +1,29 @@
 from src.utils.bbox_utils import get_center_of_bbox
-
 class PlayerBallAssigner():
+    """
+    Assigns the ball to the closest player based on bounding box positions.
+    Attributes:
+        max_player_ball_distance (int): Maximum distance (in pixels) to consider a player "with the ball".
+    Methods:
+        assign_ball_to_player(
+            player_info: dict[str, dict[str, Any]],
+            ball_bbox: tuple[int, int, int, int] | None
+        ) -> str | None:
+            Assigns the ball to the closest player within a specified distance threshold.
+            Args:
+                player_info (dict): Dictionary mapping player IDs to their information, including 'bbox'.
+                ball_bbox (tuple or None): Bounding box of the ball as (x1, y1, x2, y2).
+            Returns:
+                str or None: The ID of the closest player with the ball, or None if no player is close enough.
+    """
     def __init__(self):
         self.max_player_ball_distance = 70  # Maximum distance to consider a player "with the ball"
 
-    def assign_ball_to_player(self, player_info, ball_bbox):
+    def assign_ball_to_player(
+        self,
+        player_info: dict[str, dict[str, any]],
+        ball_bbox: tuple[int, int, int, int] | None
+    ) -> str | None:
 
         if not player_info or ball_bbox is None:
             return None

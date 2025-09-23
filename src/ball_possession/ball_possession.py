@@ -23,6 +23,14 @@ class BallPossession:
         return self.possession_data
 
     def get_possession_stats(self) -> tuple[dict[int, int], int]:
+        """
+        Calculates possession statistics based on recorded team possession data.
+
+        Returns:
+            tuple[dict[int, int], int]:
+                - A dictionary mapping each team ID (int) to the number of times they possessed the ball (int).
+                - The total number of valid possession data points (int).
+        """
         valid_data: list[int] = [team for team in self.possession_data if team is not None]
         total: int = len(valid_data)
         stats: dict[int, int] = {}
