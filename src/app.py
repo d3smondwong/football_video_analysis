@@ -153,8 +153,11 @@ def main(cfg: DictConfig):
 
         else:
 
-            # If no player is assigned the ball, append the last known team possession else None
-            ball_possession.add_possession(ball_possession.get_possession_data()[-1] if ball_possession.get_possession_data() else None)
+            # If no player is assigned the ball, assign the last known team or Team 1 if this is the first unassigned frame
+            if ball_possession.get_possession_data():
+                ball_possession.add_possession(ball_possession.get_possession_data()[-1])
+            else:
+                ball_possession.add_possession(1)
 
     team_ball_possession = np.array(ball_possession.get_possession_data())
 
