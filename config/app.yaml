@@ -3,6 +3,11 @@ video:
   # video_name: "kaggle_football.mp4"
   video_name: "man_united_asean_allstars.mp4"
 
+# Team Names in videos to analyze
+team_name:
+  team_1: "Asean All Stars"
+  team_2: "Manchester United"
+
 
 # Roboflow Models
 roboflow_model:

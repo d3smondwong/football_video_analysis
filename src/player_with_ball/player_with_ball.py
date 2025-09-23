@@ -2,7 +2,7 @@ from src.utils.bbox_utils import get_center_of_bbox
 
 class PlayerBallAssigner():
     def __init__(self):
-        self.max_player_ball_distance = 100  # Maximum distance to consider a player "with the ball"
+        self.max_player_ball_distance = 70  # Maximum distance to consider a player "with the ball"
 
     def assign_ball_to_player(self, player_info, ball_bbox):
 

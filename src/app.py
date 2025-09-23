@@ -2,6 +2,7 @@ import os
 import hydra
 import logging
 import cv2
+import numpy as np
 
 from pathlib import Path
 from dotenv import load_dotenv
@@ -13,6 +14,8 @@ from src.utils.video_utils import read_video, save_video
 from src.trackers.tracker import Tracker
 from src.team_identifier.team_identifier import TeamIdentifier
 from src.player_with_ball.player_with_ball import PlayerBallAssigner
+from src.ball_possession.ball_possession import BallPossession
+
 
 @hydra.main(config_path="../config", config_name="app.yaml", version_base="1.2")
 def main(cfg: DictConfig):
@@ -33,8 +36,10 @@ def main(cfg: DictConfig):
         raise FileNotFoundError(f"Input video file not found: {input_video_path}")
     if not input_video_path.is_file():
         raise ValueError(f"Input path is not a file: {input_video_path}")
-    if not input_video_path.suffix.lower() in ['.mp4', '.avi', '.mov']:
-        raise ValueError(f"Unsupported video file format: {input_video_path.suffix}. Supported formats are .mp4, .avi, .mov.")
+    if not input_video_path.suffix.lower() in [".mp4", ".avi", ".mov"]:
+        raise ValueError(
+            f"Unsupported video file format: {input_video_path.suffix}. Supported formats are .mp4, .avi, .mov."
+        )
 
     # Read video frames
     logger.info(f"Reading video frames from: {input_video_path}")
@@ -60,10 +65,9 @@ def main(cfg: DictConfig):
         stub_dir_path.mkdir(parents=True, exist_ok=True)
 
     # Get object tracking from the video frames
-    tracking_list = tracker.get_object_tracking(video_frames,
-                                       read_from_stub=True,
-                                       stub_path=stub_file_path
-                                       )
+    tracking_list = tracker.get_object_tracking(
+        video_frames, read_from_stub=True, stub_path=stub_file_path
+    )
 
     ###
     # Interpolate the ball positions
@@ -76,39 +80,19 @@ def main(cfg: DictConfig):
     #     return
 
     ###
-    # Assign ball to the closest player
-    ###
-    player_with_ball = PlayerBallAssigner()
-
-    for frame_num, player_info in enumerate(tracking_list["players"]):
-
-        # logger.info(f"Frame {frame_num}: Player_info: {player_info} ")
-        # logger.info(f"{list(tracking_list.keys())}")
-        # logger.info(f"{list(tracking_list['ball'])}")
-        #logger.info(f"{tracking_list['ball']}")
-
-        ball_info = tracking_list["ball"][frame_num]
-        if 1 in ball_info:
-            ball_bbox = ball_info[1]['bbox']
-        else:
-            ball_bbox = None
-
-        assigned_player_id = player_with_ball.assign_ball_to_player(player_info, ball_bbox)
-
-        if assigned_player_id is not None:
-
-            # Store the player ID who has the ball in the ball tracking list
-            tracking_list['players'][frame_num][assigned_player_id]['has_ball'] = True
-
-
-    ###
     # Identify team for each player using jersey color
     ###
     team_identifier = TeamIdentifier()
-    if tracking_list is not None and tracking_list.get("players") is not None and len(tracking_list["players"]) > 0:
+    if (
+        tracking_list is not None
+        and tracking_list.get("players") is not None
+        and len(tracking_list["players"]) > 0
+    ):
 
         # Initialize Kmeans and team colors using the detected players in the first frame
-        team_identifier.identify_team_colors(video_frames[0], tracking_list["players"][0])
+        team_identifier.identify_team_colors(
+            video_frames[0], tracking_list["players"][0]
+        )
 
         # Iterate through all frames and players to assign team colors
         for frame_num, player_tracking in enumerate(tracking_list["players"]):
@@ -123,25 +107,67 @@ def main(cfg: DictConfig):
                 a value: player_info dict with the following: 'bbox':[x1, y1, x2, y2] , 'team': np.int32(2) or np.int32(1), 'team_color': array([ 57.094, 57.212, 41.525])
                 """
                 # Get the team color for the player
-                team_colors = team_identifier.get_player_team(video_frames[frame_num],
-                                                                player_info['bbox'],
-                                                                player_id)
+                team_colors = team_identifier.get_player_team(
+                    video_frames[frame_num], player_info["bbox"], player_id
+                )
 
                 # Update the tracking list with team and team_color
-                tracking_list['players'][frame_num][player_id]['team'] = team_colors
-                tracking_list['players'][frame_num][player_id]['team_color'] = team_identifier.team_colors[team_colors]
+                tracking_list["players"][frame_num][player_id]["team"] = team_colors
+                tracking_list["players"][frame_num][player_id]["team_color"] = (
+                    team_identifier.team_colors[team_colors]
+                )
     else:
         logger.error("No player tracking data found in tracking_list['players'].")
         return
 
+    ###
+    # Assign ball to the closest player
+    ###
+    player_with_ball = PlayerBallAssigner()
+    ball_possession = BallPossession()
 
+    for frame_num, player_info in enumerate(tracking_list["players"]):
+
+        # logger.info(f"Frame {frame_num}: Player_info: {player_info} ")
+        # logger.info(f"{list(tracking_list.keys())}")
+
+        ball_info = tracking_list["ball"][frame_num]
+        if 1 in ball_info:
+            ball_bbox = ball_info[1]["bbox"]
+        else:
+            ball_bbox = None
+
+        assigned_player_id = player_with_ball.assign_ball_to_player(
+            player_info, ball_bbox
+        )
+
+        if assigned_player_id is not None:
+
+            # Store the player ID who has the ball in the ball tracking list
+            tracking_list["players"][frame_num][assigned_player_id]["has_ball"] = True
+
+            # Store the team of the player who has the ball in a separate list for analysis
+            ball_possession.add_possession(
+                tracking_list["players"][frame_num][assigned_player_id]["team"]
+            )
+
+        else:
+
+            # If no player is assigned the ball, append the last known team possession else None
+            ball_possession.add_possession(ball_possession.get_possession_data()[-1] if ball_possession.get_possession_data() else None)
+
+    team_ball_possession = np.array(ball_possession.get_possession_data())
 
     ###
     # Draw output on the video frames
     ###
-    output_video_frames = tracker.draw_annotations(video_frames, tracking_list)
+    team_1_name = cfg.team_name.team_1
+    team_2_name = cfg.team_name.team_2
+    output_video_frames = tracker.draw_annotations(video_frames, tracking_list, team_ball_possession, team_1_name, team_2_name)
     if output_video_frames is None:
-        logger.error("No output video frames were generated. Please check tracker.draw_annotations method.")
+        logger.error(
+            "No output video frames were generated. Please check tracker.draw_annotations method."
+        )
         return
 
     ###
@@ -161,6 +187,7 @@ def main(cfg: DictConfig):
 
     # Save processed video frames to a new video file
     save_video(output_video_frames, str(output_video_path))
+
 
 if __name__ == "__main__":
     # python -m src.app

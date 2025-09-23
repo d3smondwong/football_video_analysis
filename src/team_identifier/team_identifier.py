@@ -90,7 +90,7 @@ class TeamIdentifier:
             player_colors.append(player_color)
 
         # Cluster the player colors to identify teams
-        kmeans = KMeans(n_clusters=2, init='k-means++', n_init=1, random_state=0)
+        kmeans = KMeans(n_clusters=2, init='k-means++', n_init=10, random_state=0)
         kmeans.fit(player_colors)
 
         # Save the KMeans model after fitting for future use

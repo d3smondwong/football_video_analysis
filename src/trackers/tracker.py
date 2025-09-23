@@ -231,7 +231,45 @@ class Tracker:
 
         return ball_positions
 
-    def draw_annotations(self, video_frames, tracking_list):
+    def draw_possession_info_box(self, frame, frame_num, ball_possession_info, team_1_name, team_2_name):
+
+        # Draw a semi-transparent box at bottom right
+        overlay = frame.copy()
+
+        # Draw a semi-transparent rectangle
+        cv2.rectangle(overlay, (frame.shape[1]-220, frame.shape[0]-110), (frame.shape[1]-10, frame.shape[0]-10), (255, 255, 255), -1)
+        # cv2.rectangle(overlay, (1350, 850), (1900,970), (255,255,255), -1 )
+
+        # Apply transparency
+        alpha = 0.4
+        cv2.addWeighted(overlay, alpha, frame, 1 - alpha, 0, frame)
+
+        # Create a list of for all frames up to current frame
+        possession_info_frame = ball_possession_info[:frame_num + 1]
+
+        # Get the number of possession info
+        team_1_possession_in_frames = possession_info_frame[possession_info_frame==1].shape[0]
+        team_2_possession_in_frames = possession_info_frame[possession_info_frame==2].shape[0]
+        total_possession = len(possession_info_frame)
+
+        team_1_possession_percent = (team_1_possession_in_frames / total_possession) * 100 if total_possession > 0 else 0
+        team_2_possession_percent = (team_2_possession_in_frames / total_possession) * 100 if total_possession > 0 else 0
+
+        # Put possession info text on the frame
+        font = cv2.FONT_HERSHEY_SIMPLEX
+        font_scale = 0.5
+        color_text = (0, 0, 0)  # Black color for text
+
+        cv2.putText(frame, f"Ball Possession",(frame.shape[1]-210, frame.shape[0]-75), font, font_scale, color_text, thickness=2)
+        cv2.putText(frame, f"{team_1_name}: {team_1_possession_percent:.0f}%",(frame.shape[1]-210, frame.shape[0]-50), font, font_scale, color_text, thickness=1)
+        cv2.putText(frame, f"{team_2_name}: {team_2_possession_percent:.0f}%", (frame.shape[1]-210, frame.shape[0]-25), font, font_scale, color_text, thickness=1)
+
+        # cv2.putText(frame, f"Team 1: {team_1_possession_percent:.0f}%", (1400, 900), font, font_scale, color_text, thickness=1)
+        # cv2.putText(frame, f"Team 2: {team_2_possession_percent:.0f}%", (1400, 950), font, font_scale, color_text, thickness=1)
+
+        return frame
+
+    def draw_annotations(self, video_frames, tracking_list, ball_possession_info, team_1_name, team_2_name):
         logger.info(f'Start draw_annotations function')
 
         output_video_frames = []
@@ -271,6 +309,9 @@ class Tracker:
             # Draw triangle to annotate ball
             for track_id, ball in ball_dict.items():
                 frame = self._draw_triangle(frame, ball["bbox"],(0,255,0))
+
+            # Draw possession info if available
+            self.draw_possession_info_box(frame, frames_num, ball_possession_info, team_1_name, team_2_name)
 
             output_video_frames.append(frame)
 
