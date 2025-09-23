@@ -104,14 +104,14 @@ class Tracker:
                         if class_names[class_id] == 'goalkeeper':
                             detections_supervision.class_id[object_ind] = class_names_inv['player']
 
-                # Filter player/referee detections with confidence > 0.8, keep ball detections as-is
+                # Filter player/referee detections with confidence > 0.8, ball detections with confidence > 0.6
                 player_id = class_names_inv['player']
                 referee_id = class_names_inv['referee']
                 ball_id = class_names_inv['ball']
                 if detections_supervision.class_id is not None and detections_supervision.confidence is not None:
                     indices = [
                         i for i, (cid, conf) in enumerate(zip(detections_supervision.class_id, detections_supervision.confidence))
-                        if ((cid == player_id or cid == referee_id) and conf > 0.8) or (cid == ball_id)
+                        if ((cid == player_id or cid == referee_id) and conf > 0.8) or (cid == ball_id and conf > 0.6)
                     ]
                 else:
                     indices = []
