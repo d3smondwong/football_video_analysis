@@ -17,7 +17,14 @@ class Tracker:
         self.model = YOLO(model_path)
         self.tracker = sv.ByteTrack()
 
-    def _detect_frames(self, frames):
+    def _detect_frames(self, frames: list) -> list:
+        """
+        Processes a list of video frames in batches and performs object detection on each batch using the model.
+        Args:
+            frames (list): A list of video frames to be processed.
+        Returns:
+            list: A list of detections for all frames.
+        """
         logger.info(f'Start detect_frames function')
 
         # Process frames in batches to ensure it does not run out of memory
@@ -32,7 +39,34 @@ class Tracker:
 
         return detections
 
-    def get_object_tracking(self, frames, read_from_stub=False, stub_path=None):
+    def get_object_tracking(
+        self,
+        frames: list,
+        read_from_stub: bool = False,
+        stub_path: str = None
+    ) -> dict:
+        """
+        Performs object detection and tracking on a sequence of video frames, specifically for football video analysis.
+        Optionally reads tracking results from a stub file to avoid redundant computation.
+        Args:
+            frames (list): List of video frames to process for object detection and tracking.
+            read_from_stub (bool, optional): If True, attempts to read tracking results from a stub file. Defaults to False.
+            stub_path (str, optional): Path to the stub file for reading/writing tracking results. Defaults to None.
+        Returns:
+            dict: A dictionary containing tracking information for players, referees, and the ball across all frames.
+                Structure:
+                    {
+                        "players": [ {track_id: {"bbox": [...]}, ... }, ... ],
+                        "referees": [ {track_id: {"bbox": [...]}, ... }, ... ],
+                        "ball": [ {1: {"bbox": [...]}, ... }, ... ]
+                    }
+                Each list entry corresponds to a frame, and each dictionary maps track IDs to bounding box coordinates.
+        Notes:
+            - Goalkeeper detections are reclassified as players due to class imbalance.
+            - Player and referee detections are filtered by confidence (>0.8).
+            - Ball tracking uses the highest-confidence detection per frame.
+            - Results can be cached to a stub file for efficiency.
+        """
 
         logger.info(f'Start get_object_tracking function')
 
@@ -142,7 +176,23 @@ class Tracker:
         else:
             logger.warning("No detections found.")
 
-    def _draw_ellipse(self, frame, bbox, color,track_id):
+    def _draw_ellipse(
+        self,
+        frame: 'np.ndarray',
+        bbox: tuple[int, int, int, int],
+        color: tuple[int, int, int],
+        track_id: int | None
+    ) -> 'np.ndarray':
+        """
+        Draws an ellipse to represent a player or referee on the given frame, along with a rectangle displaying the track ID.
+        Args:
+            frame (np.ndarray): The image frame on which to draw.
+            bbox (tuple[int, int, int, int]): The bounding box coordinates (x1, y1, x2, y2) of the detected object.
+            color (tuple[int, int, int]): The color (B, G, R) to use for drawing the ellipse and rectangle.
+            track_id (int | None): The unique identifier for the tracked object. If None, the rectangle and text are not drawn.
+        Returns:
+            np.ndarray: The frame with the drawn ellipse and, if applicable, the rectangle and track ID.
+        """
         x1, y1, x2, y2 = map(int, bbox)
         x_center, y_center = get_center_of_bbox(bbox)
         width = get_bbox_width(bbox)
@@ -197,7 +247,18 @@ class Tracker:
 
         return frame
 
-    def _draw_triangle(self, frame, bbox, color):
+    def _draw_triangle(self, frame: np.ndarray, bbox: tuple[int, int, int, int], color: tuple[int, int, int]) -> np.ndarray:
+        """
+        Draws a filled triangle with an outlined border at the top center of the given bounding box on the frame.
+        The triangle is positioned such that its base is at the top center of the bounding box, and its tip points upward.
+        The triangle is filled with the specified color and outlined in black.
+        Args:
+            frame (np.ndarray): The image frame on which to draw the triangle.
+            bbox (tuple[int, int, int, int]): The bounding box coordinates in the format (x1, y1, x2, y2).
+            color (tuple[int, int, int]): The BGR color tuple for filling the triangle.
+        Returns:
+            np.ndarray: The frame with the triangle drawn on it.
+        """
         x1, y1, x2, y2 = map(int, bbox)
         x_center, y_center = get_center_of_bbox(bbox)
 
@@ -214,10 +275,22 @@ class Tracker:
 
         return frame
 
-    def interpolate_ball_positions(self, ball_positions):
+    def interpolate_ball_positions(self, ball_positions: list) -> list:
+        """
+        Interpolates missing ball positions in a sequence of frames.
+        This method extracts bounding box coordinates for the ball from each frame,
+        interpolates missing values using linear interpolation, and fills any remaining
+        missing values by propagating the next valid observation backward. The result is
+        a list of ball positions with missing data filled in.
+        Args:
+            ball_positions (list): A list of dictionaries containing ball detection data for each frame.
+                Each dictionary should have the format {1: {"bbox": [x1, y1, x2, y2]}}.
+        Returns:
+            list: A list of dictionaries with interpolated ball positions in the same format as the input.
 
-        # Not in use currently. Will use the detected ball position with highest confidence in each frame instead.
-
+        Not in use currently as a few false positives were detected. False positive causes the interpolation to be unreliable.
+        Will use the detected ball position with highest confidence in each frame instead.
+        """
         # Extract the bounding box coordinates for the ball
         ball_positions = [x.get(1,{}).get('bbox',[]) for x in ball_positions]
 
@@ -231,7 +304,27 @@ class Tracker:
 
         return ball_positions
 
-    def draw_possession_info_box(self, frame, frame_num, ball_possession_info, team_1_name, team_2_name):
+    def draw_possession_info_box(
+        self,
+        frame: np.ndarray,
+        frame_num: int,
+        ball_possession_info: np.ndarray,
+        team_1_name: str,
+        team_2_name: str
+    ) -> np.ndarray:
+        """
+        Draws a semi-transparent information box on the given frame displaying ball possession statistics for two teams.
+        The box is rendered at the bottom right of the frame and shows the percentage of ball possession for each team
+        up to the current frame number. The possession information is calculated based on the provided ball_possession_info array.
+        Args:
+            frame (np.ndarray): The current video frame on which to draw the possession info box.
+            frame_num (int): The index of the current frame.
+            ball_possession_info (np.ndarray): Array containing possession info per frame (1 for team 1, 2 for team 2).
+            team_1_name (str): Name of the first team.
+            team_2_name (str): Name of the second team.
+        Returns:
+            np.ndarray: The frame with the possession info box drawn.
+        """
 
         # Draw a semi-transparent box at bottom right
         overlay = frame.copy()
@@ -269,7 +362,26 @@ class Tracker:
 
         return frame
 
-    def draw_annotations(self, video_frames, tracking_list, ball_possession_info, team_1_name, team_2_name):
+    def draw_annotations(
+        self,
+        video_frames: list,
+        tracking_list: dict,
+        ball_possession_info: dict,
+        team_1_name: str,
+        team_2_name: str
+    ) -> list:
+        """
+        Annotates video frames with player, ball, and referee tracking information, as well as ball possession details.
+        Args:
+            video_frames (list): List of video frames (numpy arrays) to annotate.
+            tracking_list (dict): Dictionary containing tracking data for players, ball, and referees for each frame.
+                Expected keys: "players", "ball", "referees", each mapping to a list of dicts per frame.
+            ball_possession_info (dict): Dictionary containing ball possession information per frame.
+            team_1_name (str): Name of the first team.
+            team_2_name (str): Name of the second team.
+        Returns:
+            list: List of annotated video frames. Returns None if the number of frames in tracking_list does not match video_frames.
+        """
         logger.info(f'Start draw_annotations function')
 
         output_video_frames = []
