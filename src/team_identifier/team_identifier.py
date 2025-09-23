@@ -17,7 +17,7 @@ class TeamIdentifier:
 
     def get_player_color(self, frame: np.ndarray, bbox: tuple) -> np.ndarray:
         """
-        Extracts the dominant jersey color of a player from the frame using KMeans clustering.
+        Extracts the dominant jersey color of a player from the frame by defining a region of interest and using KMeans clustering.
 
         Args:
             frame (np.ndarray): The image frame containing the player.
@@ -28,37 +28,40 @@ class TeamIdentifier:
         """
 
         # Crop the player from the frame using the bounding box coordinates
-        image = frame[int(bbox[1]):int(bbox[3]), int(bbox[0]):int(bbox[2])]
+        x1, y1, x2, y2 = map(int, bbox)
+        image = frame[y1:y2, x1:x2]
 
-        # Focus on the upper half of the player (jersey area)
-        height = image.shape[0]
-        top_half_image = image[0:int(height/2), :, :]
+        # Define a larger, central region for sampling the color
+        height, width, _ = image.shape
+        center_x = width // 2
+        center_y = int(height * 0.25)  # Focus on the upper half
 
-        # Reshape the image (H, W, Color) into 2d array (Pixel, Color). KMeans needs 2d array as input
-        image_2d = top_half_image.reshape(-1, 3)
+        # A larger sample region of 20% of the image's height and 30% of its width
+        region_height = int(height * 0.2)
+        region_width = int(width * 0.3)
 
-        # Clustering model. init with 2 clusters (1 for jersey color, 1 for background(field)), k-means++ for better initialisation, n_init=1 to avoid FutureWarning
-        kmeans = KMeans(n_clusters=2, init='k-means++', n_init=1, random_state=0)
-        kmeans.fit(image_2d)
+        # Ensure the region is within the image bounds
+        top_y = max(0, center_y - region_height // 2)
+        bottom_y = min(height, center_y + region_height // 2)
+        left_x = max(0, center_x - region_width // 2)
+        right_x = min(width, center_x + region_width // 2)
 
-        # Get the cluster labels (0 or 1) for each pixel
-        labels = kmeans.labels_
+        sample_region = image[top_y:bottom_y, left_x:right_x]
 
-        # Reshape the labels into the orginal image shape
-        clustered_image = labels.reshape(top_half_image.shape[0], top_half_image.shape[1])
+        if sample_region.size == 0:
+            return np.zeros(3) # Return black if the sample region is empty
 
-        # Since the player is usually in the center of the image, we can assume that the cluster at the corners is the background (Field)
-        # We need to find the cluster label that is allocated to the team jersey
-        # Get the cluster labels at the 4 corners of the image
-        corner_clusters = [clustered_image[0, 0], clustered_image[0, -1], clustered_image[-1, 0], clustered_image[-1, -1]]
+        # Reshape the pixels to be used with KMeans
+        pixels = sample_region.reshape(-1, 3)
 
-        # Get the most common cluster label among the corners. set(corner_clusters) gets all unique values. max() with key=corner_clusters.count gets the most common value
-        non_player_cluster = max(set(corner_clusters), key=corner_clusters.count)
-
-        player_cluster = 1-non_player_cluster
-
-        # RGB value of the player jersey color
-        player_color = kmeans.cluster_centers_[player_cluster]
+        # Use KMeans with a single cluster to find the average color of the region
+        try:
+            kmeans = KMeans(n_clusters=1, init='k-means++', n_init=1, random_state=0)
+            kmeans.fit(pixels)
+            player_color = kmeans.cluster_centers_[0]
+        except ValueError:
+            # Fallback to simple mean if clustering fails
+            player_color = np.mean(pixels, axis=0)
 
         return player_color
 
