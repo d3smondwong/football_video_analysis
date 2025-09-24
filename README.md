@@ -1,4 +1,4 @@
-# football_video_analysis
+# Football Video Analysis
 
 This application is an end-to-end pipeline that analyzes football videos. It processes a football match video, track players and the ball, identify teams, assign ball possession, and generate an annotated output video.
 
