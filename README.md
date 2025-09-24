@@ -131,3 +131,68 @@ https://www.youtube.com/watch?v=NYS5HSUVdz8
 8. Error Handling
 
     Throughout, the script checks for missing data and logs errors, ensuring robust execution.
+
+### How to run this application?
+
+To run this application, follow these steps:
+
+1. Clone the Repository:
+
+    Open your terminal or command prompt.
+    Use git clone to download the project files.
+
+    ```
+    git clone https://github.com/d3smondwong/football_video_analysis.git
+    ```
+2. Navigate into the cloned project directory:
+
+    ```
+    cd [your_project_directory]
+    ```
+3. Set up Environment Variables:
+
+    a. Create a `.env` file in the project directory
+
+    b. Open the newly created .env file with a text editor and add your     ROBOFLOW API Key:
+
+    ```
+    ROBOFLOW_API_KEY="YOUR_API_KEY_HERE"
+    ```
+    &nbsp;&nbsp;&nbsp;&nbsp;Replace "YOUR_API_KEY_HERE" with your actual Roboflow API key.
+
+4. Install Dependencies:
+
+    a. Ensure you are still in the project's root directory (where requirements.txt is located).
+
+    b. Run the following command to install all necessary Python libraries:
+
+    ```
+    pip install -r requirements.txt
+    ```
+5. Model Training
+
+    a. Download the preferred YOLO model from [Ultralytics YOLOv12 Models](https://docs.ultralytics.com/models/yolo12/#performance-metrics)
+
+    b. Open up `football_training_yolo_v12.ipynb` in the folder `.\training\
+
+    c. Copy the code to your google colab work space ![alt text](demo_assets/fine_tune_yolo_model.png)
+
+    d. Run the code
+
+    e. Select the `{best_model}.pt` and place it in the following folder `.\artifacts\fine_tuned_models\`
+
+    f. update the config file `.\config\app.yaml`
+
+    ![fine_tune_model_path](demo_assets/fine_tune_model_path.png)
+
+5. Put the video you will like the application to analyse in the folder `input_videos`. Supported formats are `.mp4`, `.avi` and `.mov`
+
+6. Run the application:
+
+    From your project's root directory in the terminal, execute:
+
+    ```
+    python -m src.app
+
+    ```
+    This will run the application and output the annotated video in the folder `output_videos`. The output file name will be the combination of input file name and output to give `{input file name}_analysis.avi`
