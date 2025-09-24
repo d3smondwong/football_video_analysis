@@ -7,7 +7,7 @@ import cv2
 import pandas as pd
 
 from ultralytics import YOLO
-from src.utils.bbox_utils import get_center_of_bbox, get_bbox_width, measure_distance, measure_xy_distance, get_foot_position
+from src.utils.bbox_utils import get_center_of_bbox, get_bbox_width
 
 # Set up logging
 logger = logging.getLogger(__name__)

@@ -1,11 +1,9 @@
 import os
 import hydra
 import logging
-import cv2
 import numpy as np
 
 from pathlib import Path
-from dotenv import load_dotenv
 from omegaconf import DictConfig
 from hydra.utils import get_original_cwd
 from inference_sdk import InferenceHTTPClient
